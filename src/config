@@ -1,0 +1,7 @@
+[DEFAULT]
+N = 45
+IP_ADDRESS = ''
+GOODS = "FISH,SALT,BOARS"
+
+[HEY]
+
