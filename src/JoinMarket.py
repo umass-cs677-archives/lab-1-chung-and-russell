@@ -1,5 +1,5 @@
 import configparser
-from src.Person import Person
+from Person import Person
 import Pyro4
 import re
 
