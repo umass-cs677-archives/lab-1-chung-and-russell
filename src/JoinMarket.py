@@ -21,6 +21,9 @@ def get_people(config):
 
     return people
 
+# def get_random_neighbor(neighbors, n):
+
+
 if __name__ == "__main__":
 
     config = configparser.ConfigParser()
