@@ -2,6 +2,7 @@ import configparser
 from Person import Person
 import Pyro4
 import re
+import socket
 
 if __name__ == "__main__":
 
@@ -20,18 +21,17 @@ if __name__ == "__main__":
 
     person = Person(id, n_items, goods ,isbuyer)
 
-    with Pyro4.Daemon() as daemon:
+    hostname = socket.gethostname()
+    with Pyro4.Daemon(host = hostname) as daemon:
         person_uri = daemon.register(person)
         print(daemon.uriFor("BUYER1", nat=False))
         print(daemon.uriFor("BUYER1", nat=False))
-    for hostname in known_hostnames:
-        try:
-            with Pyro4.locateNS(host = hostname) as ns:
-                ns.register(id, person_uri)
-                print(id, "joined the market")
-                daemon.requestLoop()
-        except:
-            print("no name server at hostname:", hostname)
+
+        with Pyro4.locateNS(host=hostname) as ns:
+            ns.register(id, person_uri)
+            print(id, "joined the market")
+            daemon.requestLoop()
+
 
 
 
