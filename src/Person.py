@@ -1,17 +1,18 @@
 import Pyro4
 import random
+import configparser
 
-class Person:
 
-    def __init__(self, id, n_items, goods, neighbors, isSeller):
+@Pyro4.expose
+class Person(object):
+
+    def __init__(self, id, n_items, goods, isbuyer):
 
         self.id = id
         self.n_items = n_items
         self.goods = goods
-        self.neighbors = neighbors
-        self.isSeller = isSeller
-
-        self.start_trading()
+        # self.neighbors = neighbors
+        self.isbuyer = isbuyer
 
 
     def lookup(self, product_name, hopcount):
@@ -43,7 +44,7 @@ class Person:
 
     def start_trading(self):
 
-        if self.isSeller:
+        if self.isbuyer:
             print("")
 
 
@@ -57,6 +58,8 @@ class Person:
 
 
 
+    def sayhi(self):
+        print("hi")
 
 
 
