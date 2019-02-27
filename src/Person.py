@@ -58,8 +58,9 @@ class Person(object):
 
 
 
-    def sayhi(self):
-        print("hi")
+    def getItem(self):
+        print(self.n_items)
+        self.n_items -= 1
 
 
 

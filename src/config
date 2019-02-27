@@ -9,5 +9,4 @@ ISBUYER = true
 IP_ADDRESS = ''
 NEIGHBOR_NAME = SELLER1
 KNOWN_HOSTS = elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, elnux7.cs.umass.edu
-NAME_SERVER_HOST = elnux7.cs.umass.edu
 
