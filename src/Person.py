@@ -3,18 +3,20 @@ import random
 import configparser
 
 
-@Pyro4.expose
 class Person(object):
 
-    def __init__(self, id, n_items, goods, isbuyer):
+    def __init__(self, id, n_items, goods, role):
 
         self.id = id
         self.n_items = n_items
-        self.goods = goods
-        # self.neighbors = neighbors
-        self.isbuyer = isbuyer
+        self.good = goods[random.randint(0, len(goods) - 1)]
+        self.role = role
 
+    def get_neighbors(self, neigbors):
 
+        self.neighbors = neigbors
+
+    @Pyro4.expose
     def lookup(self, product_name, hopcount):
         """
         This procedure should search the network; all matching sellers respond to this message with their IDs.
@@ -27,7 +29,7 @@ class Person(object):
 
         return
 
-
+    @Pyro4.expose
     def reply(self, seller_id):
         """
         This is a reply message with the peerID of the seller
@@ -37,6 +39,7 @@ class Person(object):
 
         return
 
+    @Pyro4.expose
     def buy(self, peer_id):
 
         return
@@ -57,10 +60,6 @@ class Person(object):
                     neighbor.lookup(product_name, 4)
 
 
-
-    def getItem(self):
-        print(self.n_items)
-        self.n_items -= 1
 
 
 
