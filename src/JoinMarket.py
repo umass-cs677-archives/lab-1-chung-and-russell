@@ -43,7 +43,10 @@ if __name__ == "__main__":
 
         for ns_hostname in known_hostnames:
             try:
-                with Pyro4.locateNS(host=ns_hostname) as ns:
+                #looks up a specific nameserver on the elnux1 machine
+                #TODO: allow persons to be registered without hardocding the host and port
+                #TODO: duplicate persons are created each time this is executed
+                with Pyro4.locateNS(host = "128.119.243.147", port = 9093) as ns:
 
                     for person_uri in people_uri:
                         ns.register(person_uri, people_uri[person_uri])
