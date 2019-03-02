@@ -17,6 +17,8 @@ def get_people(config):
         id = role + str(i) + "@" + socket.gethostname()
         n_items = config["DEFAULT"]["N_ITENS"]
         person = Person(id, n_items, goods, role)
+        neighbors = [int(idx_string) for idx_string in re.split(",\s*", config["NEIGHBOR_INFO"][str(i)])]
+        person.get_neighbors(neighbors)
         people.append(person)
 
     return people

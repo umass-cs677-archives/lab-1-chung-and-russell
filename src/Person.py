@@ -12,9 +12,9 @@ class Person(object):
         self.good = goods[random.randint(0, len(goods) - 1)]
         self.role = role
 
-    def get_neighbors(self, neigbors):
+    def get_neighbors(self, neighbors):
 
-        self.neighbors = neigbors
+        self.neighbors = neighbors
 
     @Pyro4.expose
     def lookup(self, product_name, hopcount):
