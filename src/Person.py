@@ -5,6 +5,7 @@ from threading import Lock, Thread
 import socket
 import Pyro4.naming
 import time
+import sys
 
 class Person(Thread):
 
@@ -23,6 +24,7 @@ class Person(Thread):
         self.role = role
         self.known_hosts = known_hostnames
         self.neighbors = {}
+        self.lock = Lock()
 
     def get_radom_neighbors(self, ns_dict):
         """
@@ -40,7 +42,8 @@ class Person(Thread):
 
         # Randomly pick one neighbor. The number 10 is used to keep the number of times the neighbor responds
         # or contacts
-        self.neighbors[list[random.randint(0, len(list) - 1)]] = 10
+        if list:
+            self.neighbors[list[random.randint(0, len(list) - 1)]] = 10
 
     def run(self):
         hostname = socket.gethostname()
@@ -65,26 +68,29 @@ class Person(Thread):
 
             print(self.id, "join market")
 
+            t = Thread(target=daemon.requestLoop)
+            t.start()
             #Buyer loop
-            while True and self.role == "buyer":
-                #
-                # print(self.id)
-                # for neighbor_location in self.neighbors:
-                #
-                #     try:
-                #         neighbor = Pyro4.Proxy(ns.lookup(neighbor_location))
-                #         neighbor.lookup(self.good, 4, self.id)
-                #
-                #     except(Exception) as e:
-                #         self.neighbors[neighbor_location] -= 1
-                #         if self.neighbors[neighbor_location] <= 0:
-                #             del self.neighbors[neighbor_location]
-                #         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                #         message = template.format(type(e).__name__, e.args)
-                #         print(message)
-                # time.sleep(3)
-                continue
-            while True and self.role == "seller":
+            while True: #and self.role == "buyer":
+
+                if self.neighbors:
+                    for neighbor_location in self.neighbors:
+                        print("my neigbor is", neighbor_location)
+                        try:
+                            neighbor = Pyro4.Proxy(ns.lookup(neighbor_location))
+                            neighbor.lookup(self.good, 4, self.id)
+
+                        except(Exception) as e:
+                            self.neighbors[neighbor_location] -= 1
+                            if self.neighbors[neighbor_location] <= 0:
+                                del self.neighbors[neighbor_location]
+                            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                            message = template.format(type(e).__name__, e.args)
+                            print(message)
+                    time.sleep(1)
+
+
+            if self.role == "seller":
                 daemon.requestLoop()
 
 
@@ -99,6 +105,19 @@ class Person(Thread):
         :param hopcount: Max number of hops allowed to reach the seller
         :return: The sellers who sell specified product
         """
+        if id in self.neighbors and self.neighbors[id] < sys.maxsize:
+            self.neighbors[id] += 1
+        else:
+            self.neighbors[id] = 10
+
+        if self.role == "seller" and product_name == self.good:
+            self.lock.locked()
+            if self.n_items > 0:
+                "place holder"
+                return
+
+
+
 
         print(id, "has a look up from", self.id)
     @Pyro4.expose

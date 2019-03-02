@@ -1,5 +1,5 @@
 [DEFAULT]
-N_PEOPLE = 3
+N_PEOPLE = 1
 N_ITENS = 10
 GOODS = FISH,SALT,BOARS
 ROLES = buyer, seller

@@ -5,6 +5,7 @@ import Pyro4.naming
 import re
 import socket
 import random
+import sys
 
 def get_people(config):
     n = int(config["DEFAULT"]["N_PEOPLE"])
@@ -15,7 +16,7 @@ def get_people(config):
 
     for i in range(n):
         role = roles[random.randint(0,len(roles) - 1)]
-        id = role + str(i) + "@" + socket.gethostname()
+        id = sys.argv[1] + str(i) + "@" + socket.gethostname()
         n_items = config["DEFAULT"]["N_ITENS"]
         person = Person(id, n_items, goods, role, known_hostnames)
         people.append(person)
