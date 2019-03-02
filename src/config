@@ -1,5 +1,5 @@
 [DEFAULT]
-N_PEOPLE = 3
+N_PEOPLE = 6
 N_ITENS = 10
 GOODS = FISH,SALT,BOARS
 ROLES = BUYER, SELLER
@@ -9,3 +9,10 @@ IP_ADDRESS = ''
 NEIGHBOR_NAME = SELLER1
 KNOWN_HOSTS = elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, elnux7.cs.umass.edu
 
+[NEIGHBOR_INFO]
+0 = 1,5
+1 = 0,2
+2 = 1,3
+3 = 2,4
+4 = 3,5
+5 = 4,0
