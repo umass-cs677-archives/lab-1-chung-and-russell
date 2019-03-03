@@ -1,6 +1,5 @@
 import Pyro4
 import random
-import configparser
 from threading import Lock, Thread
 import socket
 import Pyro4.naming
@@ -147,6 +146,11 @@ class Person(Thread):
     def buy(self, peer_id):
 
         return
+    
+    @Pyro4.expose
+    def interact(self, peer):
+
+        return peer.id
 
     @Pyro4.expose
     def hi(self):

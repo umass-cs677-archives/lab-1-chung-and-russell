@@ -39,14 +39,32 @@ class testP2P(unittest.TestCase):
         self.id_list, self.uri_list = get_ns_peer_list(self.ns)
         self.test_buyer = Person('testbuyer@' + socket.gethostname(), 10, ['FISH','SALT','BOARS'], 'BUYER', ' ', self.ns)
         self.test_seller = Person('testseller@' + socket.gethostname(), 10, ['FISH','SALT','BOARS'], 'SELLER', ' ', self.ns)
-
-    def test_daemon_register(self):
-        self.assertEqual( 3*4, 12)
- 
-    def test_strings_a_3(self):
-        self.assertEqual( 'a'*3, 'aaa')
+        self.diff_machine_peer_ids = []
+        for peer_id in self.id_list:
+            peer_hostname = peer_id.split('@')[1]
+            if socket.gethostname() != peer_hostname:
+                self.diff_machine_peer_ids.append(peer_id)
         
-    def tearDown()
+
+    def test_local_interaction(self):
+        # make sure newly spawn test seller and buyer can interact with each other on same machine
+        # interact function just returns the id of the peer that was called
+        self.assertEqual( self.test_buyer.interact(self.test_seller),self.test_seller.id)
+ 
+    def test_nonlocal_machines_registered(self):
+        self.assertTrue(len(self.diff_machine_peer_ids)>0)
+        
+    def test_cross_machine_interaction(self):
+        # look for peer on a different machine
+        # make sure interaction is possible
+        for nonlocal_id in self.diff_machine_peer_ids:
+            peer_proxy = Pyro4.Proxy(self.ns.lookup(nonlocal_id))
+            self.test_buyer.interact(peer_proxy)
+            self.test_seller.interact(peer_proxy)
+                
+        
+    def tearDown(self):
+        pass
  
 if __name__ == '__main__':
     unittest.main()
