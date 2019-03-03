@@ -7,6 +7,9 @@ import Pyro4.naming
 import time
 import sys
 
+IP_ADDRESS = '128.119.243.168'
+PORT = 9090
+
 class Person(Thread):
 
     def __init__(self, id, n_items, goods, role, known_hostnames,nameserver):
@@ -58,12 +61,13 @@ class Person(Thread):
 
 
     def register(self):
-        with Pyro4.Daemon() as daemon:
+        with Pyro4.Daemon(host = socket.gethostbyname(socket.gethostname())) as daemon:
             try:
                 ns = self.nameserver
                 person_uri = daemon.register(self)
                 ns.register(self.id, person_uri)
                 print(self.id, "joined market")
+                return True
             except(Exception) as e:
                 template = "An exception of type {0} occurred. Arguments:\n{1!r}"
                 message = template.format(type(e).__name__, e.args)
