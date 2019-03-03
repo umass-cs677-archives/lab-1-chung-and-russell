@@ -15,6 +15,10 @@ class Person(object):
     def get_neighbors(self, neighbors):
 
         self.neighbors = neighbors
+        
+    def get_id(self):
+        return self.id
+        
 
     @Pyro4.expose
     def lookup(self, product_name, hopcount):

@@ -5,7 +5,9 @@ GOODS = FISH,SALT,BOARS
 ROLES = BUYER, SELLER
 
 [NETWORK_INFO]
-IP_ADDRESS = ''
+IP_ADDRESS = 128.119.243.168
+PORT = 9090
+HMAC_KEY = cs677
 NEIGHBOR_NAME = SELLER1
 KNOWN_HOSTS = elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, elnux7.cs.umass.edu
 
@@ -16,3 +18,5 @@ KNOWN_HOSTS = elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, eln
 3 = 2,4
 4 = 3,5
 5 = 4,0
+
+
