@@ -1,7 +1,7 @@
 # edlab machines do not have configparser file
 # therefore, temporarily hardcoding variable from config until resolved
 
-N_PEOPLE = 6
+N_PEOPLE = 2
 N_ITENS = 10
 GOODS = 'FISH,SALT,BOARS'
 ROLES = 'BUYER, SELLER'

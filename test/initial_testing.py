@@ -20,6 +20,7 @@ import unittest
 import Pyro4
 from . import Person
 import socket
+import subprocess
 
 
 def get_ns_peer_list(nameserver):
@@ -35,6 +36,7 @@ def get_ns_peer_list(nameserver):
 class testP2P(unittest.TestCase):
  
     def setUp(self):
+        # locate specific nameserver
         self.ns = Pyro4.locateNS(host = IP_ADDRESS, port = PORT, hmac_key = HMAC_KEY)
         self.id_list, self.uri_list = get_ns_peer_list(self.ns)
         self.test_buyer = Person('testbuyer@' + socket.gethostname(), 10, ['FISH','SALT','BOARS'], 'BUYER', ' ', self.ns)
@@ -67,4 +69,5 @@ class testP2P(unittest.TestCase):
         pass
  
 if __name__ == '__main__':
+    subprocess.call('./name_server.sh')
     unittest.main()
