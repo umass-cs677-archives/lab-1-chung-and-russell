@@ -10,13 +10,13 @@ import sys
 def get_people(config):
     n = int(config["DEFAULT"]["N_PEOPLE"])
     roles = re.split(",\s*", config["DEFAULT"]["ROLES"])
-    goods = sys.argv[3]#re.split(",\s*", config["DEFAULT"]["GOODS"])
+    goods = re.split(",\s*", config["DEFAULT"]["GOODS"]) #sys.argv[3]
     known_hostnames = re.split(",\s*", config["NETWORK_INFO"]["KNOWN_HOSTS"])
     people = []
 
     for i in range(n):
-        role = sys.argv[1]#roles[random.randint(0,len(roles) - 1)]
-        id = sys.argv[2] + "@" + socket.gethostname()# + str(i) + "@" + socket.gethostname()
+        role = roles[random.randint(0,len(roles) - 1)] #sys.argv[1]
+        id = role + str(i) + "@" + socket.gethostname() #sys.argv[2] +
         n_items = int(config["DEFAULT"]["N_ITENS"])
         person = Person(id, n_items, goods, role, known_hostnames)
         people.append(person)
