@@ -1,4 +1,18 @@
-import configparser
+# edlab machines do not have configparser file
+# therefore, temporarily hardcoding variable from config until resolved
+
+N_PEOPLE = 6
+N_ITENS = 10
+GOODS = 'FISH,SALT,BOARS'
+ROLES = 'BUYER, SELLER'
+
+IP_ADDRESS = '128.119.243.168'
+PORT = 9090
+HMAC_KEY = 'cs677'
+KNOWN_HOSTS = 'elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, elnux7.cs.umass.edu'
+
+
+#import configparser
 from Person import Person
 import Pyro4
 import Pyro4.naming
@@ -10,60 +24,77 @@ def get_people(config):
     n = int(config["DEFAULT"]["N_PEOPLE"])
     roles = re.split(",\s*", config["DEFAULT"]["ROLES"])
     goods = re.split(",\s*", config["DEFAULT"]["GOODS"])
+    known_hostnames = re.split(",\s*", config["NETWORK_INFO"]["KNOWN_HOSTS"])
+    ip_address = config["NETWORK_INFO"]["IP_ADDRESS"]
+    port = int(config["NETWORK_INFO"]["PORT"])
+    hmac_key = config["NETWORK_INFO"]["HMAC_KEY"]
+    nameserver = Pyro4.locateNS(host = ip_address, port = port, hmac_key = hmac_key)
     people = []
     ids = []
-
     for i in range(n):
         role = roles[random.randint(0,len(roles) - 1)]
         id = "peer" + str(i) + "@" + socket.gethostname()
         n_items = config["DEFAULT"]["N_ITENS"]
-        person = Person(id, n_items, goods, role)
-        neighbors = [int(idx_string) for idx_string in re.split(",\s*", config["NEIGHBOR_INFO"][str(i)])]
-        person.get_neighbors(neighbors)
+        person = Person(id, n_items, goods, role, known_hostnames,nameserver)
         people.append(person)
         ids.append(id)
 
-    return people,ids
+    return people,ids,nameserver
 
+def get_people_simple():
+    n = N_PEOPLE
+    roles = re.split(",\s*", ROLES)
+    goods = re.split(",\s*", GOODS)
+    known_hostnames = re.split(",\s*", KNOWN_HOSTS)
+    ip_address = IP_ADDRESS
+    port = PORT
+    hmac_key = HMAC_KEY
+    nameserver = Pyro4.locateNS(host = ip_address, port = port, hmac_key = hmac_key)
+    people = []
+    ids = []
+    for i in range(n):
+        role = roles[random.randint(0,len(roles) - 1)]
+        id = "peer" + str(i) + "@" + socket.gethostname()
+        n_items = N_ITENS
+        person = Person(id, n_items, goods, role, known_hostnames,nameserver)
+        people.append(person)
+        ids.append(id)
+
+    return people,ids,nameserver
 # def get_random_neighbor(neighbors, n):
+    
+def get_ns_peer_list(nameserver):
+    ns_dict = nameserver.list()
+    peer_list = []
+    uri_list = []
+    for (key,val) in zip(ns_dict,ns_dict.values()):
+        if "NameServer" not in key:
+            peer_list.append(key)
+            uri_list.append(val)
+    return peer_list,uri_list
 
+def get_roundrobin_neighbors(nameserver):
+    peer_list,uri_list = get_ns_peer_list(nameserver)
+    pass
+    
 
 if __name__ == "__main__":
 
-    config = configparser.ConfigParser()
-    config.read("config")
+#    config = configparser.ConfigParser()
+#    config.read("config")
+    
+    people,ids,ns = get_people_simple()
+    for person in people:
+        person.register()
+    
+    peer_list,uri_list = get_ns_peer_list(ns)
+    
+    
+    for person in people:
+        person.set_roundrobin_neighbors(peer_list)
+        print(person.id,person.neighbors)
+        person.run()
 
-    known_hostnames = re.split(",\s*", config["NETWORK_INFO"]["KNOWN_HOSTS"])
-
-    hostname = socket.gethostname()
-
-    with Pyro4.Daemon(host = hostname) as daemon:
-        people_uri = {}
-        people,_ = get_people(config)
-
-        for person in people:
-            person_uri = daemon.register(person)
-            people_uri[person.id] = person_uri
-
-        try:
-            #looks up a specific nameserver from config file
-            #requires nameserver to be manually setup
-            #TODO: set this up so TAs will be able to run our code?
-            ip_address = config["NETWORK_INFO"]["IP_ADDRESS"]
-            port = int(config["NETWORK_INFO"]["PORT"])
-            hmac_key = config["NETWORK_INFO"]["HMAC_KEY"]
-            
-            with Pyro4.locateNS(host = ip_address, port = port, hmac_key = hmac_key) as ns:
-
-                for person_uri in people_uri:
-                    ns.register(person_uri, people_uri[person_uri])
-                    print(person_uri, "joined the market")
-
-                daemon.requestLoop()
-        except(Exception) as e:
-            template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            message = template.format(type(e).__name__, e.args)
-            print(message)
 
 
 
