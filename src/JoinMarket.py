@@ -92,7 +92,6 @@ if __name__ == "__main__":
     
     for person in people:
         person.set_roundrobin_neighbors(peer_list)
-        print(person.id,person.neighbors)
         person.run()
 
 
