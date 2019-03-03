@@ -6,7 +6,7 @@ import socket
 import Pyro4.naming
 import time
 import sys
-import copy
+from concurrent.futures import ThreadPoolExecutor
 
 class Person(Thread):
 
@@ -27,9 +27,10 @@ class Person(Thread):
         self.known_hosts = known_hostnames
         self.neighbors = {}
         self.itemlock = Lock()
-        self.seller_lock = Lock()
+        self.seller_list_lock = Lock()
         self.ns = Pyro4.locateNS()
         self.sellers = []
+        self.executor = ThreadPoolExecutor(max_workers = 10)
 
     def get_radom_neighbors(self, ns_dict):
         """
@@ -59,21 +60,21 @@ class Person(Thread):
             self.ns.register(self.id, person_uri)
             self.get_radom_neighbors(self.ns.list())
 
-            # for ns_hostname in self.known_hosts :
-            #     try:
-            #         with Pyro4.locateNS(host=ns_hostname) as ns:
-            #             person_uri = daemon.register(self)
-            #             ns.register(self.id, person_uri)
-            #
-            #     except(Exception) as e:
-            #         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-            #         message = template.format(type(e).__name__, e.args)
-            #         print(message)
+            for ns_hostname in self.known_hosts :
+                try:
+                    with Pyro4.locateNS(host=ns_hostname) as ns:
+                        person_uri = daemon.register(self)
+                        ns.register(self.id, person_uri)
+                except(NameError) as ne:
+                    
+                except(Exception) as e:
+                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
+                    message = template.format(type(e).__name__, e.args)
+                    print(message)
 
             print(self.id, "join market")
 
-            t = Thread(target=daemon.requestLoop)
-            t.start()
+            self.executor.submit(daemon.requestLoop)
 
             #Buyer loop
             while True and self.role == "buyer":
@@ -84,8 +85,8 @@ class Person(Thread):
                         try:
                             neighbor = Pyro4.Proxy(self.ns.lookup(neighbor_location))
                             id_list = [self.id]
-                            Thread(target = neighbor.lookup, args=(self.good, 4, id_list)).start()
-                            # neighbor.lookup(self.good, 4, id_list)
+                            # Thread(target = neighbor.lookup, args=(self.good, 4, id_list)).start()
+                            self.executor.submit(neighbor.lookup, self.good, 4, id_list)
 
                         except(Exception) as e:
                             # If this peer can't be contacted, decrement its active point
@@ -99,7 +100,6 @@ class Person(Thread):
             while True:
                 time.sleep(1)
 
-
     @Pyro4.expose
     def lookup(self, product_name, hopcount, id_list):
         """
@@ -112,8 +112,13 @@ class Person(Thread):
         :return: The sellers who sell specified product
         """
         hopcount -= 1
+
+        if hopcount < 0:
+            print("Max number of hop reached, message is discarded")
+            return
+
         incoming_peer_id = id_list[-1]
-        print(incoming_peer_id, "asks about", product_name)
+        print(incoming_peer_id, "asks", self.id, "about", product_name)
 
         # When getting contacted by a peer, add the peer to active neighbor list (Unfinished feature)
         if incoming_peer_id in self.neighbors and self.neighbors[incoming_peer_id] < sys.maxsize:
@@ -121,31 +126,31 @@ class Person(Thread):
         else:
             self.neighbors[incoming_peer_id] = 10
 
-        self.itemlock.acquire()
-        if self.role == "seller" and product_name == self.good:
+        try:
+            with self.itemlock:
+                # Matching seller
+                if self.role == "seller" and product_name == self.good and self.n_items > 0:
 
-            if self.n_items > 0:
-                try:
-                    print("selling to", incoming_peer_id)
+                    print(self.id, "replies to", incoming_peer_id)
                     recipient = Pyro4.Proxy(self.ns.lookup(incoming_peer_id))
                     id_list.pop()
                     id_list.insert(0, self.id)
-                    Thread(target = recipient.reply, args = (id_list,)).start()
+                    self.executor.submit(recipient.reply, id_list)
 
-                except(Exception) as e:
-                    template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                    message = template.format(type(e).__name__, e.args)
-                    print(message)
-                    sys.exit()
+                # Anyone else who is not a matching seller simply forwards the messages
+                else:
+                    for neighbor_location in self.neighbors:
+                        # Don't ask the peer who just asked you
+                        if neighbor_location != incoming_peer_id:
+                            neighbor = Pyro4.Proxy(self.ns.lookup(neighbor_location))
+                            id_list.append(self.id)
+                            self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
-        self.itemlock.release()
-
-        # else:
-        #     if self.neighbors:
-        #         for neighbor_location in self.neighbors:
-        #             neighbor = Pyro4.Proxy(self.ns.lookup(neighbor_location))
-        #             neighbor.lookup(self.good, hopcount, self.id)
-
+        except(Exception) as e:
+            template = "An exception of type {0} occurred at Lookup. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print(message)
+            sys.exit()
 
 
     @Pyro4.expose
@@ -156,48 +161,43 @@ class Person(Thread):
         :param id_list: a list of id used to traverse back to original sender
         :return:
         """
-        if id_list:
-            # Only one peer id left, this is the seller_id by current design
-            if len(id_list) == 1:
+        try:
+            if id_list and len(id_list) == 1:
+                # Only one peer id left, this is the seller_id by current design
 
-                print("I got a reply from", id_list)
-                print(self.seller_lock.locked())
-                self.seller_lock.acquire()
-                self.sellers.extend(id_list)
-                random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
-                self.seller_lock.release()
+                print(self.id, "got a reply from", id_list[0])
+
+                with self.seller_list_lock:
+                    self.sellers.extend(id_list)
+                    random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
 
                 seller = Pyro4.Proxy(self.ns.lookup(random_seller_id))
-                print("purchasing")
-                basket = []
-                t = Thread(target = seller.buy, args = (self.id, basket,))
-                t.start()
-                self.seller_lock.acquire()
-                if basket:
-                    self.sellers = []
-                self.seller_lock.release()
+                future = self.executor.submit(seller.buy, self.id)
+
+                with self.seller_list_lock:
+
+                    if future.result():
+                        print(self.id, "purchased", self.good, "from", random_seller_id)
+                        self.sellers = []
+            elif id_list and len(id_list) > 1:
+                print(self.id, "got a reply from", id_list[0])
+                recipient_id = id_list.pop()
+                recipient = Pyro4.Proxy(self.ns.lookup(recipient_id))
+                self.executor.submit(recipient.reply, id_list)
+
+        except(Exception) as e:
+            template = "An exception of type {0} occurred at Reply. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print(message)
+            sys.exit()
 
     @Pyro4.expose
-    def buy(self, peer_id, basket):
-        print(self.itemlock.locked())
+    def buy(self, peer_id):
 
-        self.itemlock.acquire()
-        if self.n_items > 0:
-            print(peer_id, "purchased", self.good)
-            self.n_items -= 1
-            basket.append(self.good)
-        else:
-            print(peer_id, "failed to purchase", self.good)
-
-        self.itemlock.release()
-
-
-
-
-
-
-
-
-
-
-
+        with self.itemlock:
+            if self.n_items > 0:
+                print(peer_id, "purchased", self.good)
+                self.n_items -= 1
+                return True
+            else:
+                print(peer_id, "failed to purchase", self.good)
