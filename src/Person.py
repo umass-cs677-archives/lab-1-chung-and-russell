@@ -141,7 +141,7 @@ class Person(Thread):
                 while True and self.role == "buyer":
 
                     lookup_requests = []
-                    print(self.id, "at lookup1", self.neighbors_lock.locked())
+                    print(self.id, "at run", self.neighbors_lock.locked())
                     with self.neighbors_lock:
                         for neighbor_location in self.neighbors:
                             print(self.id,"has a neighbor", neighbor_location)
@@ -202,6 +202,7 @@ class Person(Thread):
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
+                print(self.id, "at lookup1", self.neighbors_lock.locked())
                 with self.neighbors_lock:
                     for neighbor_location in self.neighbors:
                         # Don't ask the peer who just asked you
