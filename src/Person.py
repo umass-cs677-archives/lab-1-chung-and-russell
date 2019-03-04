@@ -29,11 +29,10 @@ class Person(Thread):
         self.good = self.pick_random_item(goods)
         self.role = role
 
-        Pyro4.config.reset()
-        Pyro4.config.NS_AUTOCLEAN = 5
-        self.ns = Pyro4.locateNS(host=socket.gethostname())
+        self.ns = self.get_nameserver(known_hostnames)
 
         self.known_hosts = known_hostnames
+        self.neighbors_lock = Lock()
         self.neighbors = {}
 
         self.seller_list_lock = Lock()
@@ -58,10 +57,10 @@ class Person(Thread):
         # or contacts
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
+
             self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
-            # neigbor = Pyro4.Proxy(self.neighbors[random_neighbor_id])
             # send a message to the neighbor
                 try:
                     self.executor.submit(neigbor.sayhi, self.id)
@@ -79,8 +78,10 @@ class Person(Thread):
         :param peer_id:
         :return:
         """
-        if peer_id not in self.neighbors:
-            self.neighbors[peer_id] = self.ns.lookup(peer_id)
+        with self.neighbors_lock:
+
+            if peer_id not in self.neighbors:
+                self.neighbors[peer_id] = self.ns.lookup(peer_id)
 
     def get_nameserver(self, known_hosts):
 
@@ -97,48 +98,37 @@ class Person(Thread):
     def run(self):
 
         try:
-            hostname = socket.gethostname()
 
             with Pyro4.Daemon() as daemon:
                 person_uri = daemon.register(self)
                 self.ns.register(self.id, person_uri)
-
-                # Start accepting incoming requests
-                self.executor.submit(daemon.requestLoop)
-                self.get_radom_neighbors(self.ns.list())
-
-                # # Scan through all known hosts for a running name server
-                # for ns_hostname in self.known_hosts :
-                #     try:
-                #         with Pyro4.locateNS(host=ns_hostname) as ns:
-                #             person_uri = daemon.register(self)
-                #             ns.register(self.id, person_uri)
-                #
-                #     except NameError as e:
-                #         template = "An exception of type {0} occurred. Arguments:\n{1!r}"
-                #         message = template.format(type(e).__name__, e.args)
-                #         print(message)
 
                 if self.role == "buyer":
                     print(self.id, "joins market buying", self.good)
                 else:
                     print(self.id, "joins market selling", self.good)
 
+                # Start accepting incoming requests
+                self.executor.submit(daemon.requestLoop)
+                self.get_radom_neighbors(self.ns.list())
+
+
                 #Buyer loop
                 while True and self.role == "buyer":
 
-                    if self.neighbors:
-                        for neighbor_location in self.neighbors:
-                            print(self.id,"has a neighbor", neighbor_location)
+                    with self.neighbors_lock:
+                        if self.neighbors:
+                            for neighbor_location in self.neighbors:
+                                print(self.id,"has a neighbor", neighbor_location)
 
-                            neighbor = Pyro4.Proxy(self.ns.lookup(neighbor_location))
-                            id_list = [self.id]
-                            self.executor.submit(neighbor.lookup, self.good, 4, id_list)
+                                with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
+                                    id_list = [self.id]
+                                    self.executor.submit(neighbor.lookup, self.good, 3, id_list)
 
-                        time.sleep(1)
+                            time.sleep(0.5)
                 #Seller loop
                 while True:
-                    time.sleep(1)
+                    time.sleep(0.5)
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -157,7 +147,7 @@ class Person(Thread):
         """
         hopcount -= 1
 
-        if hopcount < 0:
+        if hopcount <= 0:
             print("Max number of hop reached, message is discarded")
             return
 
@@ -165,26 +155,26 @@ class Person(Thread):
         print(incoming_peer_id, "asks", self.id, "about", product_name)
 
         try:
-            with self.itemlock:
 
-                # Matching seller
-                if self.role == "seller" and product_name == self.good and self.n_items > 0:
+            # Matching seller
+            if self.role == "seller" and product_name == self.good and self.n_items > -1:
 
-                    print(self.id, "replies to", incoming_peer_id)
-                    recipient = Pyro4.Proxy(self.ns.lookup(incoming_peer_id))
+                print(self.id, "replies to", incoming_peer_id, "about", product_name)
+                with Pyro4.Proxy(self.ns.lookup(incoming_peer_id)) as recipient:
                     # Matching seller appends its id to the head of the list so it is received at the original request sender
                     id_list.pop()
                     id_list.insert(0, self.id)
                     self.executor.submit(recipient.reply, id_list)
 
-                # Anyone else who is not a matching seller simply forwards the messages
-                else:
-                    for neighbor_location in self.neighbors:
-                        # Don't ask the peer who just asked you
-                        if neighbor_location != incoming_peer_id:
-                            neighbor = Pyro4.Proxy(self.neighbors[neighbor_location])
+            # Anyone else who is not a matching seller simply forwards the messages
+            else:
+                for neighbor_location in self.neighbors:
+                    # Don't ask the peer who just asked you
+                    if neighbor_location != incoming_peer_id:
+                        with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
                             id_list.append(self.id)
                             self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
+
 
         except(Exception) as e:
             template = "An exception of type {0} occurred at Lookup. Arguments:\n{1!r}"
@@ -210,8 +200,8 @@ class Person(Thread):
                     self.sellers.extend(id_list)
                     random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
 
-                seller = Pyro4.Proxy(self.ns.lookup(random_seller_id))
-                future = self.executor.submit(seller.buy, self.id)
+                with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
+                    future = self.executor.submit(seller.buy, self.id)
 
                 with self.seller_list_lock:
 
@@ -221,8 +211,8 @@ class Person(Thread):
             elif id_list and len(id_list) > 1:
                 print(self.id, "got a reply from", id_list[0])
                 recipient_id = id_list.pop()
-                recipient = Pyro4.Proxy(self.neighbors[recipient_id])
-                self.executor.submit(recipient.reply, id_list)
+                with Pyro4.Proxy(self.neighbors[recipient_id]) as recipient:
+                    self.executor.submit(recipient.reply, id_list)
 
         except(Exception) as e:
             template = "An exception of type {0} occurred at Reply. Arguments:\n{1!r}"
