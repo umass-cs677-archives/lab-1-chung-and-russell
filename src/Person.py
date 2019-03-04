@@ -142,7 +142,7 @@ class Person(Thread):
                                 with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
                                     neighbor._pyroHmacKey = self.hmac
                                     id_list = [self.id]
-                                    self.executor.submit(neighbor.lookup, self.good, 3, id_list)
+                                    self.executor.submit(neighbor.lookup, self.good, 5, id_list)
 
                             time.sleep(0.5)
                 #Seller loop
@@ -182,13 +182,13 @@ class Person(Thread):
             # Matching seller
             if self.role == "seller" and product_name == self.good and self.n_items > -1:
 
-                print(self.id, "replies to", incoming_peer_id, "about", product_name)
                 with Pyro4.Proxy(self.ns.lookup(incoming_peer_id)) as recipient:
                     recipient._pyroHmacKey = self.hmac
                     # Matching seller appends its id to the head of the list so it is received at the original request sender
                     id_list.pop()
                     id_list.insert(0, self.id)
                     self.executor.submit(recipient.reply, id_list)
+                    print(self.id, "replies to", incoming_peer_id, "about", product_name)
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
@@ -252,8 +252,8 @@ class Person(Thread):
 
         with self.itemlock:
             if self.n_items > 0:
-                print(peer_id, "purchased", self.good)
                 self.n_items -= 1
+                print(peer_id, "purchased", self.good)
                 return True
             # No more items to sell, randomly pick up another item
             else:
