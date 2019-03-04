@@ -80,8 +80,6 @@ class Person(Thread):
             with self.neighbors_lock:
                 self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
-            print(self.id, "at sayhi2neighbor2", self.neighbors_lock.locked())
-
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
                 # send a message to the neighbor
@@ -107,7 +105,6 @@ class Person(Thread):
 
             if peer_id not in self.neighbors:
                 self.neighbors[peer_id] = self.ns.lookup(peer_id)
-        print(self.id,"at sayhi2", self.neighbors_lock.locked())
 
 
     def get_nameserver(self, ns_name, hmac_key):
@@ -153,8 +150,6 @@ class Person(Thread):
                                 neighbor._pyroHmacKey = self.hmac
                                 id_list = [self.id]
                                 lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
-                    
-                    print(self.id, "at lookup2", self.neighbors_lock.locked())
 
                     for lookup_request in lookup_requests:
                         lookup_request.result()
@@ -207,8 +202,6 @@ class Person(Thread):
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
-                if self.id in self.neighbors:
-                    print("1111111111111")
                 with self.neighbors_lock:
                     for neighbor_location in self.neighbors:
                         # Don't ask the peer who just asked you
