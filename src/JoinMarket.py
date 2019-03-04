@@ -18,11 +18,14 @@ def get_people(config):
     # Starts name server
     try:
         ns = Pyro4.locateNS(host = ns_name)
-        haskey = False
     except Exception:
         print("No server found, start one")
-        Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name, "hmac": hmac_key}).start()
-        haskey = True
+        # Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name, "hmac": hmac_key}).start()
+        Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name}).start()
+        # haskey = True
+
+    # Future implementation may include hmac key for security
+    haskey = False
 
     for i in range(n):
         role = roles[random.randint(0,len(roles) - 1)]

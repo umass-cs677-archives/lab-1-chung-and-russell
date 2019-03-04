@@ -11,7 +11,7 @@ import re
 
 class Person(Thread):
 
-    def __init__(self, id, n_items, goods, role, ns_name, hmac_key, haskey = True):
+    def __init__(self, id, n_items, goods, role, ns_name, hmac_key, haskey):
         """
         :param id: unique id for the person. The format is buyer1@hostname, seller0@hostname, seller1@hostname
         :param n_items: number of items a seller has, irrelevant field if a person is assigned as a buyer
@@ -91,7 +91,6 @@ class Person(Thread):
     def get_nameserver(self, ns_name, hmac_key):
 
         try:
-            print("heyhey", hmac_key)
             ns = Pyro4.locateNS(host = ns_name, hmac_key = hmac_key)
             return ns
         except Exception as e:
