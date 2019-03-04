@@ -68,6 +68,7 @@ class Person(Thread):
                 list.append(id)
             
         self.sayhi2neighbor(list)
+
     def sayhi2neighbor(self, list):
 
         # Randomly pick one neighbor
@@ -134,6 +135,7 @@ class Person(Thread):
                 #Buyer loop
                 while True and self.role == "buyer":
 
+                    lookup_requests = []
                     with self.neighbors_lock:
                         if self.neighbors:
                             for neighbor_location in self.neighbors:
@@ -142,16 +144,18 @@ class Person(Thread):
                                 with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
                                     neighbor._pyroHmacKey = self.hmac
                                     id_list = [self.id]
-                                    self.executor.submit(neighbor.lookup, self.good, 5, id_list)
+                                    lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
+                    
+                    for lookup_request in lookup_request:
+                        lookup_request.result()
 
-                            time.sleep(0.5)
                 #Seller loop
                 while True:
                     with self.neighbors_lock:
                         if self.neighbors:
                             for n in self.neighbors:
                                 print(self.id, "has a neighbor", n)
-                    time.sleep(0.5)
+                    time.sleep(1)
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -261,6 +265,7 @@ class Person(Thread):
                 self.good = self.pick_random_item(self.goods)
                 self.n_items = self.max_items
                 print(self.id, "now sells", self.good)
+                return False
 
     def pick_random_item(self, goods):
         """
