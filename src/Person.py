@@ -30,10 +30,10 @@ class Person(Thread):
         self.goods = goods
         self.good = self.pick_random_item(goods)
         self.role = role
+        
+        self.hmac = hmac_key if haskey else None
+        self.ns = self.get_nameserver(ns_name, self.hmac)
 
-        self.ns = self.get_nameserver(ns_name, hmac_key)
-
-        # self.known_hosts = known_hostnames
         self.neighbors_lock = Lock()
         self.neighbors = {}
 
@@ -41,7 +41,7 @@ class Person(Thread):
         self.sellers = []
         self.executor = ThreadPoolExecutor(max_workers = 10)
 
-        self.hmac = hmac_key if haskey else None
+        
 
     def get_radom_neighbors(self, ns_dict):
         """
@@ -91,7 +91,7 @@ class Person(Thread):
     def get_nameserver(self, ns_name, hmac_key):
 
         try:
-            hmac_key
+            print("heyhey", hmac_key)
             ns = Pyro4.locateNS(host = ns_name, hmac_key = hmac_key)
             return ns
         except Exception as e:
@@ -135,6 +135,10 @@ class Person(Thread):
                             time.sleep(0.5)
                 #Seller loop
                 while True:
+                    #with self.neighbors_lock:
+                    #    if self.neighbors:
+                    #        for n in self.neighbors:
+                    #            print(self.id, "has a neighbor", n)
                     time.sleep(0.5)
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"

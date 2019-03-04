@@ -17,8 +17,6 @@ def get_people(config):
 
     # Starts name server
     try:
-        Pyro4.config.NS_AUTOCLEAN = 5
-
         ns = Pyro4.locateNS(host = ns_name)
         haskey = False
     except Exception:
