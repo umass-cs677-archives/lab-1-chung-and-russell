@@ -70,12 +70,14 @@ class Person(Thread):
         self.sayhi2neighbor(list)
 
     def sayhi2neighbor(self, list):
-
+        
+        
         # Randomly pick one neighbor
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
-            self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
+            with self.neighbors_lock:
+                self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
@@ -137,24 +139,24 @@ class Person(Thread):
 
                     lookup_requests = []
                     with self.neighbors_lock:
-                        if self.neighbors:
-                            for neighbor_location in self.neighbors:
-                                print(self.id,"has a neighbor", neighbor_location)
+                        for neighbor_location in self.neighbors:
+                            print(self.id,"has a neighbor", neighbor_location)
 
-                                with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
-                                    neighbor._pyroHmacKey = self.hmac
-                                    id_list = [self.id]
-                                    lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
+                            with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
+                                neighbor._pyroHmacKey = self.hmac
+                                id_list = [self.id]
+                                lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
                     
-                    for lookup_request in lookup_request:
+                    for lookup_request in lookup_requests:
                         lookup_request.result()
 
+                    time.sleep(1)
                 #Seller loop
                 while True:
-                    with self.neighbors_lock:
-                        if self.neighbors:
-                            for n in self.neighbors:
-                                print(self.id, "has a neighbor", n)
+                    #with self.neighbors_lock:
+                        #if self.neighbors:
+                            #for n in self.neighbors:
+                                #print(self.id, "has a neighbor", n)
                     time.sleep(1)
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
@@ -196,13 +198,18 @@ class Person(Thread):
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
-                for neighbor_location in self.neighbors:
-                    # Don't ask the peer who just asked you
-                    if neighbor_location != incoming_peer_id:
-                        with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
-                            neighbor._pyroHmacKey = self.hmac
-                            id_list.append(self.id)
-                            self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
+                if self.id in self.neighbors:
+                    print("1111111111111")
+                with self.neighbors_lock:
+                    for neighbor_location in self.neighbors:
+                        # Don't ask the peer who just asked you
+                        if neighbor_location != incoming_peer_id:
+                            with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
+                                neighbor._pyroHmacKey = self.hmac
+                                if self.id in id_list:
+                                    print("sender",incoming_peer_id, "and im", self.id, "id_list", id_list)
+                                    id_list.append(self.id)
+                                    self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
 
         except(Exception) as e:
