@@ -76,9 +76,11 @@ class Person(Thread):
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
-            print(self.id, "at sayhi2neighbor", self.neighbors_lock.locked())
+            print(self.id, "at sayhi2neighbor1", self.neighbors_lock.locked())
             with self.neighbors_lock:
                 self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
+
+            print(self.id, "at sayhi2neighbor2", self.neighbors_lock.locked())
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
@@ -100,11 +102,13 @@ class Person(Thread):
         :param peer_id:
         :return:
         """
-        print(self.id,"at sayhi", self.neighbors_lock.locked())
+        print(self.id,"at sayhi1", self.neighbors_lock.locked())
         with self.neighbors_lock:
 
             if peer_id not in self.neighbors:
                 self.neighbors[peer_id] = self.ns.lookup(peer_id)
+        print(self.id,"at sayhi2", self.neighbors_lock.locked())
+
 
     def get_nameserver(self, ns_name, hmac_key):
 
@@ -140,7 +144,7 @@ class Person(Thread):
                 while True and self.role == "buyer":
 
                     lookup_requests = []
-                    print(self.id, "at lookup", self.neighbors_lock.locked())
+                    print(self.id, "at lookup1", self.neighbors_lock.locked())
                     with self.neighbors_lock:
                         for neighbor_location in self.neighbors:
                             print(self.id,"has a neighbor", neighbor_location)
@@ -150,6 +154,7 @@ class Person(Thread):
                                 id_list = [self.id]
                                 lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
                     
+                    print(self.id, "at lookup2", self.neighbors_lock.locked())
 
                     for lookup_request in lookup_requests:
                         lookup_request.result()
