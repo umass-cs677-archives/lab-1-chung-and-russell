@@ -66,8 +66,8 @@ class Person(Thread):
         for id in ns_dict:
             if "NameServer" not in id and self.id != id and re.match(re_pattern, id) and self.hostname not in id:
                 list.append(id)
-
-
+            
+        self.sayhi2neighbor(list)
     def sayhi2neighbor(self, list):
 
         # Randomly pick one neighbor
@@ -147,10 +147,10 @@ class Person(Thread):
                             time.sleep(0.5)
                 #Seller loop
                 while True:
-                    #with self.neighbors_lock:
-                    #    if self.neighbors:
-                    #        for n in self.neighbors:
-                    #            print(self.id, "has a neighbor", n)
+                    with self.neighbors_lock:
+                        if self.neighbors:
+                            for n in self.neighbors:
+                                print(self.id, "has a neighbor", n)
                     time.sleep(0.5)
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
