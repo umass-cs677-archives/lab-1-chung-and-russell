@@ -1,6 +1,6 @@
 import configparser
 from Person import Person
-import Pyro4
+from threading import Thread
 import Pyro4.naming
 import re
 import socket
@@ -10,15 +10,23 @@ import sys
 def get_people(config):
     n = int(config["DEFAULT"]["N_PEOPLE"])
     roles = re.split(",\s*", config["DEFAULT"]["ROLES"])
-    goods = re.split(",\s*", config["DEFAULT"]["GOODS"]) #sys.argv[3]
-    known_hostnames = re.split(",\s*", config["NETWORK_INFO"]["KNOWN_HOSTS"])
+    goods = re.split(",\s*", config["DEFAULT"]["GOODS"])
+    ns_name = sys.argv[1]
     people = []
+    hmac_key = config["NETWORK_INFO"]["HMAC_KEY"]
+
+    # Starts name server
+    try:
+        Pyro4.config.NS_AUTOCLEAN = 5
+        Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name, "hmac": hmac_key}).start()
+    except Exception:
+        print("Address in use")
 
     for i in range(n):
-        role = roles[random.randint(0,len(roles) - 1)] #sys.argv[1]
-        id = role + str(i) + "@" + socket.gethostname() #sys.argv[2] +
+        role = roles[random.randint(0,len(roles) - 1)]
+        id = role + str(i) + "@" + socket.gethostname()
         n_items = int(config["DEFAULT"]["N_ITENS"])
-        person = Person(id, n_items, goods, role, known_hostnames)
+        person = Person(id, n_items, goods, role, ns_name, hmac_key)
         people.append(person)
 
     return people
@@ -31,8 +39,11 @@ if __name__ == "__main__":
 
     people = get_people(config)
 
-    for person in people:
-        person.start()
+    try:
+        for person in people:
+            person.start()
+    except KeyboardInterrupt:
+        sys.exit()
 
 
 

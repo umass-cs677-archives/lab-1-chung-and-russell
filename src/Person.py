@@ -10,13 +10,14 @@ from concurrent.futures import ThreadPoolExecutor
 
 class Person(Thread):
 
-    def __init__(self, id, n_items, goods, role, known_hostnames):
+    def __init__(self, id, n_items, goods, role, ns_name, hmac_key):
         """
         :param id: unique id for the person. The format is buyer1@hostname, seller0@hostname, seller1@hostname
         :param n_items: number of items a seller has, irrelevant field if a person is assigned as a buyer
         :param goods: all goods allowed in the market
         :param role: the person's role
-        :param known_hostnames: all known hostname for the initialization of the network
+        :param ns_name: name server host name
+        :param hmac_key: hmac key for private connection
         """
         Thread.__init__(self)
         self.id = id
@@ -29,15 +30,17 @@ class Person(Thread):
         self.good = self.pick_random_item(goods)
         self.role = role
 
-        self.ns = self.get_nameserver(known_hostnames)
+        self.ns = self.get_nameserver(ns_name, hmac_key)
 
-        self.known_hosts = known_hostnames
+        # self.known_hosts = known_hostnames
         self.neighbors_lock = Lock()
         self.neighbors = {}
 
         self.seller_list_lock = Lock()
         self.sellers = []
         self.executor = ThreadPoolExecutor(max_workers = 10)
+
+        self.hmac = hmac_key
 
     def get_radom_neighbors(self, ns_dict):
         """
@@ -61,6 +64,7 @@ class Person(Thread):
             self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
+                neigbor._pyroHmacKey = self.hmac
             # send a message to the neighbor
                 try:
                     self.executor.submit(neigbor.sayhi, self.id)
@@ -83,23 +87,23 @@ class Person(Thread):
             if peer_id not in self.neighbors:
                 self.neighbors[peer_id] = self.ns.lookup(peer_id)
 
-    def get_nameserver(self, known_hosts):
+    def get_nameserver(self, ns_name, hmac_key):
 
-        for ns_hostname in known_hosts:
-            try:
-                self.ns = Pyro4.locateNS(host=ns_hostname)
-                Pyro4.config.reset()
-                Pyro4.config.NS_AUTOCLEAN = 5
-            except NameError as e:
-                template = "An exception of type {0} occurred at get_nameserver. Arguments:\n{1!r}"
-                message = template.format(type(e).__name__, e.args)
-                print(message)
+        try:
+            ns = Pyro4.locateNS(host = ns_name, hmac_key = hmac_key)
+            return ns
+        except Exception as e:
+            template = "An exception of type {0} occurred at get_nameserver. Arguments:\n{1!r}"
+            message = template.format(type(e).__name__, e.args)
+            print(message)
+
 
     def run(self):
 
         try:
 
-            with Pyro4.Daemon() as daemon:
+            with Pyro4.Daemon(host = socket.gethostname()) as daemon:
+                daemon._pyroHmacKey = self.hmac
                 person_uri = daemon.register(self)
                 self.ns.register(self.id, person_uri)
 
@@ -122,6 +126,7 @@ class Person(Thread):
                                 print(self.id,"has a neighbor", neighbor_location)
 
                                 with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
+                                    neighbor._pyroHmacKey = self.hmac
                                     id_list = [self.id]
                                     self.executor.submit(neighbor.lookup, self.good, 3, id_list)
 
@@ -161,6 +166,7 @@ class Person(Thread):
 
                 print(self.id, "replies to", incoming_peer_id, "about", product_name)
                 with Pyro4.Proxy(self.ns.lookup(incoming_peer_id)) as recipient:
+                    recipient._pyroHmacKey = self.hmac
                     # Matching seller appends its id to the head of the list so it is received at the original request sender
                     id_list.pop()
                     id_list.insert(0, self.id)
@@ -172,6 +178,7 @@ class Person(Thread):
                     # Don't ask the peer who just asked you
                     if neighbor_location != incoming_peer_id:
                         with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
+                            neighbor._pyroHmacKey = self.hmac
                             id_list.append(self.id)
                             self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
@@ -201,6 +208,7 @@ class Person(Thread):
                     random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
 
                 with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
+                    seller._pyroHmacKey = self.hmac
                     future = self.executor.submit(seller.buy, self.id)
 
                 with self.seller_list_lock:
@@ -212,6 +220,7 @@ class Person(Thread):
                 print(self.id, "got a reply from", id_list[0])
                 recipient_id = id_list.pop()
                 with Pyro4.Proxy(self.neighbors[recipient_id]) as recipient:
+                    recipient._pyroHmacKey = self.hmac
                     self.executor.submit(recipient.reply, id_list)
 
         except(Exception) as e:

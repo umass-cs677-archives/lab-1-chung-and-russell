@@ -6,4 +6,5 @@ ROLES = buyer, seller
 
 [NETWORK_INFO]
 KNOWN_HOSTS = elnux1.cs.umass.edu, elnux2.cs.umass.edu, elnux3.cs.umass.edu, elnux7.cs.umass.edu
+HMAC_KEY = 1
 
