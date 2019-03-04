@@ -146,8 +146,8 @@ class Person(Thread):
                                     id_list = [self.id]
                                     lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
                     
-                    for lookup_request in lookup_request:
-                        lookup_request.result()
+                    for request in lookup_requests:
+                        request.result()
 
                 #Seller loop
                 while True:
