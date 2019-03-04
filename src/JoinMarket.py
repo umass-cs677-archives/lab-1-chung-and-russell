@@ -8,7 +8,12 @@ import random
 import sys
 
 def get_people(config):
-    n = int(config["DEFAULT"]["N_PEOPLE"])
+    if len(sys.argv) == 3:
+        # if there is a second command line input, let that be the number of peers spawned
+        n_people = int(sys.argv[2])
+    else:
+        # otherwise, default to the number specified in the config file
+        n_people = int(config["DEFAULT"]["N_PEOPLE"])
     roles = re.split(",\s*", config["DEFAULT"]["ROLES"])
     goods = re.split(",\s*", config["DEFAULT"]["GOODS"])
     ns_name = sys.argv[1]
@@ -27,7 +32,7 @@ def get_people(config):
     # Future implementation may include hmac key for security
     haskey = False
 
-    for i in range(n):
+    for i in range(n_people):
         role = roles[random.randint(0,len(roles) - 1)]
         id = role + str(i) + "@" + socket.gethostname()
         n_items = int(config["DEFAULT"]["N_ITENS"])
