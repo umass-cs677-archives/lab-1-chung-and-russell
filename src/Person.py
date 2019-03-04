@@ -187,7 +187,7 @@ class Person(Thread):
                     # Matching seller appends its id to the head of the list so it is received at the original request sender
                     id_list.pop()
                     id_list.insert(0, self.id)
-                    self.executor.submit(recipient.reply, id_list)
+                    self.executor.submit(recipient.reply, self.id, id_list)
                     print(self.id, "replies to", incoming_peer_id, "about", product_name)
 
             # Anyone else who is not a matching seller simply forwards the messages
@@ -208,7 +208,7 @@ class Person(Thread):
 
 
     @Pyro4.expose
-    def reply(self, id_list):
+    def reply(self, peer_id,  id_list):
         """
         This is a reply message with the peerID of the seller
         :param peer_id: peer who responds
@@ -219,7 +219,7 @@ class Person(Thread):
             if id_list and len(id_list) == 1:
                 # Only one peer id left, this is the seller_id by current design
 
-                print(self.id, "got a reply from", id_list[0])
+                print(self.id, "got a reply from", peer_id)
 
                 with self.seller_list_lock:
                     self.sellers.extend(id_list)
@@ -235,11 +235,11 @@ class Person(Thread):
                         print(self.id, "purchased", self.good, "from", random_seller_id)
                         self.sellers = []
             elif id_list and len(id_list) > 1:
-                print(self.id, "got a reply from", id_list[0])
+                print(self.id, "got a reply from", peer_id)
                 recipient_id = id_list.pop()
                 with Pyro4.Proxy(self.neighbors[recipient_id]) as recipient:
                     recipient._pyroHmacKey = self.hmac
-                    self.executor.submit(recipient.reply, id_list)
+                    self.executor.submit(recipient.reply, self.id, id_list)
 
         except(Exception) as e:
             template = "An exception of type {0} occurred at Reply. Arguments:\n{1!r}"
