@@ -147,6 +147,7 @@ class Person(Thread):
                                 id_list = [self.id]
                                 lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
                     
+
                     for lookup_request in lookup_requests:
                         lookup_request.result()
 
