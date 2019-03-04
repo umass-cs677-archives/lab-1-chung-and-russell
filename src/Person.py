@@ -33,6 +33,7 @@ class Person(Thread):
         
         self.hmac = hmac_key if haskey else None
         self.ns = self.get_nameserver(ns_name, self.hmac)
+        self.hostname = socket.gethostname()
 
         self.neighbors_lock = Lock()
         self.neighbors = {}
@@ -43,7 +44,7 @@ class Person(Thread):
 
         
 
-    def get_radom_neighbors(self, ns_dict):
+    def get_random_neighbors(self, ns_dict):
         """
         This function takes the dictionary obtained from a name server and filters out
         the thread itself
@@ -51,14 +52,25 @@ class Person(Thread):
         :return:
         """
         list = []
-        # Filters out the NameServer and itself from the registered objects. Only store the actual location of
-        # other registered objects
+
+        # Find peers with the same hostname
+        re_pattern = "seller[0-9]+@.|buyer[0-9]+@."
         for id in ns_dict:
-            if "NameServer" not in id and self.id != id and re.match("seller[0-9]+@.|buyer[0-9]+@", id):
+            if "NameServer" not in id and self.id != id and re.match(re_pattern, id) and self.hostname in id:
                 list.append(id)
 
-        # Randomly pick one neighbor. The number 10 is used to keep the number of times the neighbor responds
-        # or contacts
+        self.sayhi2neighbor(list)
+
+        list.clear()
+        # Find peers with different hostname
+        for id in ns_dict:
+            if "NameServer" not in id and self.id != id and re.match(re_pattern, id) and self.hostname not in id:
+                list.append(id)
+
+
+    def sayhi2neighbor(self, list):
+
+        # Randomly pick one neighbor
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
@@ -66,7 +78,7 @@ class Person(Thread):
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
-            # send a message to the neighbor
+                # send a message to the neighbor
                 try:
                     self.executor.submit(neigbor.sayhi, self.id)
 
@@ -75,6 +87,7 @@ class Person(Thread):
                     template = "An exception of type {0} occurred at get_random_neighbor. Arguments:\n{1!r}"
                     message = template.format(type(e).__name__, e.args)
                     print(message)
+
 
     @Pyro4.expose
     def sayhi(self, peer_id):
@@ -103,7 +116,7 @@ class Person(Thread):
 
         try:
 
-            with Pyro4.Daemon(host = socket.gethostname()) as daemon:
+            with Pyro4.Daemon(host = self.hostname) as daemon:
                 daemon._pyroHmacKey = self.hmac
                 person_uri = daemon.register(self)
                 self.ns.register(self.id, person_uri)
@@ -115,7 +128,7 @@ class Person(Thread):
 
                 # Start accepting incoming requests
                 self.executor.submit(daemon.requestLoop)
-                self.get_radom_neighbors(self.ns.list())
+                self.get_random_neighbors(self.ns.list())
 
 
                 #Buyer loop
