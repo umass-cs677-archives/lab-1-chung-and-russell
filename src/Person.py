@@ -7,10 +7,11 @@ import Pyro4.naming
 import time
 import sys
 from concurrent.futures import ThreadPoolExecutor
+import re
 
 class Person(Thread):
 
-    def __init__(self, id, n_items, goods, role, ns_name, hmac_key):
+    def __init__(self, id, n_items, goods, role, ns_name, hmac_key, haskey = True):
         """
         :param id: unique id for the person. The format is buyer1@hostname, seller0@hostname, seller1@hostname
         :param n_items: number of items a seller has, irrelevant field if a person is assigned as a buyer
@@ -40,7 +41,7 @@ class Person(Thread):
         self.sellers = []
         self.executor = ThreadPoolExecutor(max_workers = 10)
 
-        self.hmac = hmac_key
+        self.hmac = hmac_key if haskey else None
 
     def get_radom_neighbors(self, ns_dict):
         """
@@ -53,7 +54,7 @@ class Person(Thread):
         # Filters out the NameServer and itself from the registered objects. Only store the actual location of
         # other registered objects
         for id in ns_dict:
-            if "NameServer" not in id and self.id != id:
+            if "NameServer" not in id and self.id != id and re.match("seller[0-9]+@.|buyer[0-9]+@", id):
                 list.append(id)
 
         # Randomly pick one neighbor. The number 10 is used to keep the number of times the neighbor responds
@@ -90,6 +91,7 @@ class Person(Thread):
     def get_nameserver(self, ns_name, hmac_key):
 
         try:
+            hmac_key
             ns = Pyro4.locateNS(host = ns_name, hmac_key = hmac_key)
             return ns
         except Exception as e:

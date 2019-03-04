@@ -18,15 +18,19 @@ def get_people(config):
     # Starts name server
     try:
         Pyro4.config.NS_AUTOCLEAN = 5
-        Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name, "hmac": hmac_key}).start()
+
+        ns = Pyro4.locateNS(host = ns_name)
+        haskey = False
     except Exception:
-        print("Address in use")
+        print("No server found, start one")
+        Thread(target=Pyro4.naming.startNSloop, kwargs={"host": ns_name, "hmac": hmac_key}).start()
+        haskey = True
 
     for i in range(n):
         role = roles[random.randint(0,len(roles) - 1)]
         id = role + str(i) + "@" + socket.gethostname()
         n_items = int(config["DEFAULT"]["N_ITENS"])
-        person = Person(id, n_items, goods, role, ns_name, hmac_key)
+        person = Person(id, n_items, goods, role, ns_name, hmac_key, haskey)
         people.append(person)
 
     return people
