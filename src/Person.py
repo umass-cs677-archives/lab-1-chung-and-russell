@@ -76,6 +76,7 @@ class Person(Thread):
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
+            print(self.id, "at sayhi2neighbor", self.neighbors_lock.locked())
             with self.neighbors_lock:
                 self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
@@ -99,6 +100,7 @@ class Person(Thread):
         :param peer_id:
         :return:
         """
+        print(self.id,"at sayhi", self.neighbors_lock.locked())
         with self.neighbors_lock:
 
             if peer_id not in self.neighbors:
@@ -138,6 +140,7 @@ class Person(Thread):
                 while True and self.role == "buyer":
 
                     lookup_requests = []
+                    print(self.id, "at lookup", self.neighbors_lock.locked())
                     with self.neighbors_lock:
                         for neighbor_location in self.neighbors:
                             print(self.id,"has a neighbor", neighbor_location)
