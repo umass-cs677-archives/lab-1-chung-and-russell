@@ -148,7 +148,12 @@ class Person(Thread):
 
                             with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
                                 seller._pyroHmacKey = self.hmac
-                                self.executor.submit(seller.buy, self.id)
+                                future = self.executor.submit(seller.buy, self.id)
+                        if future.result():
+                            print(self.id, "bought", self.good, "from", random_seller_id)
+                        else:
+                            print(self.id, "failed to buy", self.good, "from", random_seller_id)
+
                         self.sellers = []
                         self.good = self.pick_random_item(self.goods)
 
@@ -245,11 +250,11 @@ class Person(Thread):
         with self.itemlock:
             if self.n_items > 0:
                 self.n_items -= 1
-                print(time.time(), peer_id, "purchased", self.good, "from", self.id, self.n_items, "remains now")
+                # print(time.time(), peer_id, "purchased", self.good, "from", self.id, self.n_items, "remains now")
                 return True
             # No more items to sell, randomly pick up another item
             else:
-                print(time.time(), peer_id, "failed to purchase", self.good)
+                # print(time.time(), peer_id, "failed to purchase", self.good)
                 self.good = self.pick_random_item(self.goods)
                 self.n_items = self.max_items
                 print(time.time(), self.id, "now sells", self.n_items, self.good)
