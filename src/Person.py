@@ -10,6 +10,7 @@ import sys
 from concurrent.futures import ThreadPoolExecutor
 import re
 
+
 class Person(Thread):
 
     def __init__(self, id, n_items, goods, role, ns_name, hmac_key, haskey):
@@ -31,7 +32,7 @@ class Person(Thread):
         self.goods = goods
         self.good = self.pick_random_item(goods)
         self.role = role
-        
+
         self.hmac = hmac_key if haskey else None
         self.ns = self.get_nameserver(ns_name, self.hmac)
         self.hostname = socket.gethostname()
@@ -40,9 +41,7 @@ class Person(Thread):
 
         self.seller_list_lock = Lock()
         self.sellers = []
-        self.executor = ThreadPoolExecutor(max_workers = 10)
-
-        
+        self.executor = ThreadPoolExecutor(max_workers=10)
 
     def get_random_neighbors(self, ns_dict):
         """
@@ -66,12 +65,11 @@ class Person(Thread):
         for id in ns_dict:
             if "NameServer" not in id and self.id != id and re.match(re_pattern, id) and self.hostname not in id:
                 list.append(id)
-            
+
         self.sayhi2neighbor(list)
 
     def sayhi2neighbor(self, list):
-        
-        
+
         # Randomly pick one neighbor
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
@@ -90,7 +88,6 @@ class Person(Thread):
                     message = template.format(type(e).__name__, e.args)
                     print(message)
 
-
     @Pyro4.expose
     def sayhi(self, peer_id):
         """
@@ -101,23 +98,21 @@ class Person(Thread):
         if peer_id not in self.neighbors:
             self.neighbors[peer_id] = self.ns.lookup(peer_id)
 
-
     def get_nameserver(self, ns_name, hmac_key):
 
         try:
-            ns = Pyro4.locateNS(host = ns_name, hmac_key = hmac_key)
+            ns = Pyro4.locateNS(host=ns_name, hmac_key=hmac_key)
             return ns
         except Exception as e:
             template = "An exception of type {0} occurred at get_nameserver. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
             print(message)
 
-
     def run(self):
 
         try:
 
-            with Pyro4.Daemon(host = self.hostname) as daemon:
+            with Pyro4.Daemon(host=self.hostname) as daemon:
                 daemon._pyroHmacKey = self.hmac
                 person_uri = daemon.register(self)
                 self.ns.register(self.id, person_uri)
@@ -131,16 +126,13 @@ class Person(Thread):
                 self.executor.submit(daemon.requestLoop)
                 self.get_random_neighbors(self.ns.list())
 
-
-                #Buyer loop
+                # Buyer loop
                 while True and self.role == "buyer":
 
                     lookup_requests = []
                     neighbors_copy = copy.deepcopy(self.neighbors)
 
-
                     for neighbor_location in neighbors_copy:
-
                         with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
                             neighbor._pyroHmacKey = self.hmac
                             id_list = [self.id]
@@ -159,11 +151,10 @@ class Person(Thread):
                                 self.executor.submit(seller.buy, self.id)
                         self.sellers = []
                         self.good = self.pick_random_item(self.goods)
-                        
-                    time.sleep(1)
-                #Seller loop
-                while True:
 
+                    time.sleep(1)
+                # Seller loop
+                while True:
                     time.sleep(1)
 
         except(Exception) as e:
@@ -176,7 +167,6 @@ class Person(Thread):
         """
         This procedure should search the network; all matching sellers respond to this message with their IDs.
         The hopcount is decremented at each hop and the message is discarded when it reaches 0.
-
         :param product_name: Name of the product buyer wants
         :param hopcount: Max number of hops allowed to reach the seller
         :id_list: an id list used to traverse back to original sender
@@ -220,11 +210,11 @@ class Person(Thread):
             message = template.format(type(e).__name__, e.args)
             print(message)
 
-
     @Pyro4.expose
-    def reply(self, id_list):
+    def reply(self, peer_id, id_list):
         """
         This is a reply message with the peerID of the seller
+        :param peer_id: peer who responds
         :param id_list: a list of id used to traverse back to original sender
         :return:
         """
@@ -270,4 +260,4 @@ class Person(Thread):
         :param goods: list of possible goods to sell or buy
         :return: a randomly picked good
         """
-        return goods[random.randint(0, len(goods) -1)]
+        return goods[random.randint(0, len(goods) - 1)]
