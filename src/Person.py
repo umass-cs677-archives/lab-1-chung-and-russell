@@ -144,7 +144,7 @@ class Person(Thread):
                         with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
                             neighbor._pyroHmacKey = self.hmac
                             id_list = [self.id]
-                            print(time.time(), self.id, "issues a lookup to", neighbor_location, "for", self.product_name)
+                            print(time.time(), self.id, "issues a lookup to", neighbor_location, "for", self.good)
                             lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
 
                     for lookup_request in lookup_requests:
