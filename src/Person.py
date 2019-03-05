@@ -201,12 +201,13 @@ class Person(Thread):
             else:
                 neighbors_copy = copy.deepcopy(self.neighbors)
 
+                if self.id == incoming_peer_id:
+                    print(self.id, "something is wrong")
                 for neighbor_location in neighbors_copy:
                     # Don't ask the peer who just asked you
                     if neighbor_location != incoming_peer_id:
                         with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
                             neighbor._pyroHmacKey = self.hmac
-                          
                             id_list.append(self.id)
                             self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
