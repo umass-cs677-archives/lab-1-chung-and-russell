@@ -1,6 +1,7 @@
 import Pyro4
 import random
 import configparser
+import copy
 from threading import Thread, Lock
 import socket
 import Pyro4.naming
@@ -35,7 +36,6 @@ class Person(Thread):
         self.ns = self.get_nameserver(ns_name, self.hmac)
         self.hostname = socket.gethostname()
 
-        self.neighbors_lock = Lock()
         self.neighbors = {}
 
         self.seller_list_lock = Lock()
@@ -76,9 +76,7 @@ class Person(Thread):
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
-            print(self.id, "at sayhi2neighbor1", self.neighbors_lock.locked())
-            with self.neighbors_lock:
-                self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
+            self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
@@ -100,11 +98,8 @@ class Person(Thread):
         :param peer_id:
         :return:
         """
-        print(self.id,"at sayhi1", self.neighbors_lock.locked())
-        with self.neighbors_lock:
-
-            if peer_id not in self.neighbors:
-                self.neighbors[peer_id] = self.ns.lookup(peer_id)
+        if peer_id not in self.neighbors:
+            self.neighbors[peer_id] = self.ns.lookup(peer_id)
 
 
     def get_nameserver(self, ns_name, hmac_key):
@@ -128,9 +123,9 @@ class Person(Thread):
                 self.ns.register(self.id, person_uri)
 
                 if self.role == "buyer":
-                    print(self.id, "joins market buying", self.good)
+                    print(time.time(), self.id, "joins market buying", self.good)
                 else:
-                    print(self.id, "joins market selling", self.good)
+                    print(time.time(), self.id, "joins market selling", self.good)
 
                 # Start accepting incoming requests
                 self.executor.submit(daemon.requestLoop)
@@ -141,27 +136,36 @@ class Person(Thread):
                 while True and self.role == "buyer":
 
                     lookup_requests = []
-                    print(self.id, "at run", self.neighbors_lock.locked())
-                    with self.neighbors_lock:
-                        for neighbor_location in self.neighbors:
-                            print(self.id,"has a neighbor", neighbor_location)
+                    neighbors_copy = copy.deepcopy(self.neighbors)
 
-                            with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
-                                neighbor._pyroHmacKey = self.hmac
-                                id_list = [self.id]
-                                lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
+
+                    for neighbor_location in neighbors_copy:
+
+                        with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
+                            neighbor._pyroHmacKey = self.hmac
+                            id_list = [self.id]
+                            print(time.time(), self.id, "issues a lookup to", neighbor_location, "for", self.good)
+                            lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
 
                     for lookup_request in lookup_requests:
                         lookup_request.result()
 
+                    with self.seller_list_lock:
+                        if self.sellers:
+                            random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
+
+                            with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
+                                seller._pyroHmacKey = self.hmac
+                                self.executor.submit(seller.buy, self.id)
+                        self.sellers = []
+                        self.good = self.pick_random_item(self.goods)
+                        
                     time.sleep(1)
                 #Seller loop
                 while True:
-                    #with self.neighbors_lock:
-                        #if self.neighbors:
-                            #for n in self.neighbors:
-                                #print(self.id, "has a neighbor", n)
+
                     time.sleep(1)
+
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -181,11 +185,9 @@ class Person(Thread):
         hopcount -= 1
 
         if hopcount <= 0:
-            print("Max number of hop reached, message is discarded")
             return
 
         incoming_peer_id = id_list[-1]
-        print(incoming_peer_id, "asks", self.id, "about", product_name)
 
         try:
 
@@ -198,21 +200,19 @@ class Person(Thread):
                     id_list.pop()
                     id_list.insert(0, self.id)
                     self.executor.submit(recipient.reply, self.id, id_list)
-                    print(self.id, "replies to", incoming_peer_id, "about", product_name)
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
-                print(self.id, "at lookup1", self.neighbors_lock.locked())
-                with self.neighbors_lock:
-                    for neighbor_location in self.neighbors:
-                        # Don't ask the peer who just asked you
-                        if neighbor_location != incoming_peer_id:
-                            with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
-                                neighbor._pyroHmacKey = self.hmac
-                                if self.id in id_list:
-                                    print("sender",incoming_peer_id, "and im", self.id, "id_list", id_list)
-                                    id_list.append(self.id)
-                                    self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
+                neighbors_copy = copy.deepcopy(self.neighbors)
+
+                for neighbor_location in neighbors_copy:
+                    # Don't ask the peer who just asked you
+                    if neighbor_location != incoming_peer_id:
+                        with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
+                            neighbor._pyroHmacKey = self.hmac
+                            if self.id not in id_list:
+                                id_list.append(self.id)
+                            self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
 
         except(Exception) as e:
@@ -233,23 +233,12 @@ class Person(Thread):
             if id_list and len(id_list) == 1:
                 # Only one peer id left, this is the seller_id by current design
 
-                print(self.id, "got a reply from", peer_id)
+                print(self.id, "got a match reply from", id_list[0])
 
                 with self.seller_list_lock:
                     self.sellers.extend(id_list)
-                    random_seller_id = self.sellers[random.randint(0, len(self.sellers) - 1)]
 
-                with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
-                    seller._pyroHmacKey = self.hmac
-                    future = self.executor.submit(seller.buy, self.id)
-
-                with self.seller_list_lock:
-
-                    if future.result():
-                        print(self.id, "purchased", self.good, "from", random_seller_id)
-                        self.sellers = []
             elif id_list and len(id_list) > 1:
-                print(self.id, "got a reply from", peer_id)
                 recipient_id = id_list.pop()
                 with Pyro4.Proxy(self.neighbors[recipient_id]) as recipient:
                     recipient._pyroHmacKey = self.hmac
@@ -267,14 +256,14 @@ class Person(Thread):
         with self.itemlock:
             if self.n_items > 0:
                 self.n_items -= 1
-                print(peer_id, "purchased", self.good)
+                print(time.time(), peer_id, "purchased", self.good, "from", self.id, self.n_items, "remains now")
                 return True
             # No more items to sell, randomly pick up another item
             else:
-                print(peer_id, "failed to purchase", self.good)
+                print(time.time(), peer_id, "failed to purchase", self.good)
                 self.good = self.pick_random_item(self.goods)
                 self.n_items = self.max_items
-                print(self.id, "now sells", self.good)
+                print(time.time(), self.id, "now sells", self.n_items, self.good)
                 return False
 
     def pick_random_item(self, goods):
@@ -282,5 +271,4 @@ class Person(Thread):
         :param goods: list of possible goods to sell or buy
         :return: a randomly picked good
         """
-
         return goods[random.randint(0, len(goods) -1)]
