@@ -149,10 +149,11 @@ class Person(Thread):
                             with Pyro4.Proxy(self.ns.lookup(random_seller_id)) as seller:
                                 seller._pyroHmacKey = self.hmac
                                 future = self.executor.submit(seller.buy, self.id)
-                        if future.result():
-                            print(self.id, "bought", self.good, "from", random_seller_id)
-                        else:
-                            print(self.id, "failed to buy", self.good, "from", random_seller_id)
+
+                                if future.result():
+                                    print(self.id, "bought", self.good, "from", random_seller_id)
+                                else:
+                                    print(self.id, "failed to buy", self.good, "from", random_seller_id)
 
                         self.sellers = []
                         self.good = self.pick_random_item(self.goods)
