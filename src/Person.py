@@ -151,9 +151,9 @@ class Person(Thread):
                                 future = self.executor.submit(seller.buy, self.id)
 
                                 if future.result():
-                                    print(self.id, "bought", self.good, "from", random_seller_id)
+                                    print(time.time(), self.id, "bought", self.good, "from", random_seller_id)
                                 else:
-                                    print(self.id, "failed to buy", self.good, "from", random_seller_id)
+                                    print(time.time(), self.id, "failed to buy", self.good, "from", random_seller_id)
 
                         self.sellers = []
                         self.good = self.pick_random_item(self.goods)
