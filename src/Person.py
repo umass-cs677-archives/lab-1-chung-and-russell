@@ -1,6 +1,7 @@
 import Pyro4
 import random
 import configparser
+import copy
 from threading import Thread, Lock
 import socket
 import Pyro4.naming
@@ -35,7 +36,6 @@ class Person(Thread):
         self.ns = self.get_nameserver(ns_name, self.hmac)
         self.hostname = socket.gethostname()
 
-        self.neighbors_lock = Lock()
         self.neighbors = {}
 
         self.seller_list_lock = Lock()
@@ -76,9 +76,7 @@ class Person(Thread):
         if list:
             random_neighbor_id = list[random.randint(0, len(list) - 1)]
 
-            print(self.id, "at sayhi2neighbor1", self.neighbors_lock.locked())
-            with self.neighbors_lock:
-                self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
+            self.neighbors[random_neighbor_id] = self.ns.lookup(random_neighbor_id)
 
             with Pyro4.Proxy(self.neighbors[random_neighbor_id]) as neigbor:
                 neigbor._pyroHmacKey = self.hmac
@@ -100,11 +98,8 @@ class Person(Thread):
         :param peer_id:
         :return:
         """
-        print(self.id,"at sayhi1", self.neighbors_lock.locked())
-        with self.neighbors_lock:
-
-            if peer_id not in self.neighbors:
-                self.neighbors[peer_id] = self.ns.lookup(peer_id)
+        if peer_id not in self.neighbors:
+            self.neighbors[peer_id] = self.ns.lookup(peer_id)
 
 
     def get_nameserver(self, ns_name, hmac_key):
@@ -141,15 +136,16 @@ class Person(Thread):
                 while True and self.role == "buyer":
 
                     lookup_requests = []
-                    print(self.id, "at run", self.neighbors_lock.locked())
-                    with self.neighbors_lock:
-                        for neighbor_location in self.neighbors:
-                            print(self.id,"has a neighbor", neighbor_location)
+                    neighbors_copy = copy.deepcopy(self.neighbors)
 
-                            with Pyro4.Proxy(self.ns.lookup(neighbor_location)) as neighbor:
-                                neighbor._pyroHmacKey = self.hmac
-                                id_list = [self.id]
-                                lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
+
+                    for neighbor_location in neighbors_copy:
+                        print(self.id,"has a neighbor", neighbor_location)
+
+                        with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
+                            neighbor._pyroHmacKey = self.hmac
+                            id_list = [self.id]
+                            lookup_requests.append(self.executor.submit(neighbor.lookup, self.good, 5, id_list))
 
                     for lookup_request in lookup_requests:
                         lookup_request.result()
@@ -157,11 +153,12 @@ class Person(Thread):
                     time.sleep(1)
                 #Seller loop
                 while True:
-                    #with self.neighbors_lock:
-                        #if self.neighbors:
-                            #for n in self.neighbors:
-                                #print(self.id, "has a neighbor", n)
+                    neighbors_copy = copy.deepcopy(self.neighbors)
+                    for neighbor_location in neighbors_copy:
+                        print(self.id, "has a neighbor", neighbor_location)
+
                     time.sleep(1)
+
         except(Exception) as e:
             template = "An exception of type {0} occurred at run. Arguments:\n{1!r}"
             message = template.format(type(e).__name__, e.args)
@@ -202,17 +199,16 @@ class Person(Thread):
 
             # Anyone else who is not a matching seller simply forwards the messages
             else:
-                print(self.id, "at lookup1", self.neighbors_lock.locked())
-                with self.neighbors_lock:
-                    for neighbor_location in self.neighbors:
-                        # Don't ask the peer who just asked you
-                        if neighbor_location != incoming_peer_id:
-                            with Pyro4.Proxy(self.neighbors[neighbor_location]) as neighbor:
-                                neighbor._pyroHmacKey = self.hmac
-                                if self.id in id_list:
-                                    print("sender",incoming_peer_id, "and im", self.id, "id_list", id_list)
-                                    id_list.append(self.id)
-                                    self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
+                neighbors_copy = copy.deepcopy(self.neighbors)
+
+                for neighbor_location in neighbors_copy:
+                    # Don't ask the peer who just asked you
+                    if neighbor_location != incoming_peer_id:
+                        with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
+                            neighbor._pyroHmacKey = self.hmac
+                          
+                            id_list.append(self.id)
+                            self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
 
         except(Exception) as e:
