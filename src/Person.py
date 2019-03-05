@@ -222,10 +222,9 @@ class Person(Thread):
 
 
     @Pyro4.expose
-    def reply(self, peer_id,  id_list):
+    def reply(self, id_list):
         """
         This is a reply message with the peerID of the seller
-        :param peer_id: peer who responds
         :param id_list: a list of id used to traverse back to original sender
         :return:
         """
