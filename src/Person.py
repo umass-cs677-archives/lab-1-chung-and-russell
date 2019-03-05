@@ -208,7 +208,8 @@ class Person(Thread):
                     if neighbor_location != incoming_peer_id:
                         with Pyro4.Proxy(neighbors_copy[neighbor_location]) as neighbor:
                             neighbor._pyroHmacKey = self.hmac
-                            id_list.append(self.id)
+                            if self.id not in id_list:
+                                id_list.append(self.id)
                             self.executor.submit(neighbor.lookup, product_name, hopcount, id_list)
 
 
@@ -230,7 +231,7 @@ class Person(Thread):
             if id_list and len(id_list) == 1:
                 # Only one peer id left, this is the seller_id by current design
 
-                print(self.id, "got a reply from", peer_id)
+                print(self.id, "got a match reply from", peer_id)
 
                 with self.seller_list_lock:
                     self.sellers.extend(id_list)
@@ -248,6 +249,7 @@ class Person(Thread):
             elif id_list and len(id_list) > 1:
                 print(self.id, "got a reply from", peer_id)
                 recipient_id = id_list.pop()
+                print(self.id, "ready to reply to", recipient_id)
                 with Pyro4.Proxy(self.neighbors[recipient_id]) as recipient:
                     recipient._pyroHmacKey = self.hmac
                     self.executor.submit(recipient.reply, self.id, id_list)
