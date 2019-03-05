@@ -1,0 +1,156 @@
+Output of three peers on elnux1
+
+1551760185.9081285 seller0@elnux1 joins market selling FISH
+1551760185.9115436 buyer1@elnux1 joins market buying FISH
+1551760185.9140508 buyer2@elnux1 joins market buying BOARS
+1551760185.922859 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760185.923891 buyer2@elnux1 issues a lookup to buyer1@elnux1 for BOARS
+1551760185.930814 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760185.9378433 buyer1@elnux1 purchased FISH from seller0@elnux1 4 remains now
+1551760186.9365137 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760186.9397182 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760186.9462712 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760186.955452 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760186.9614573 buyer2@elnux1 purchased FISH from seller0@elnux1 3 remains now
+1551760187.953418 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760187.9609792 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760187.9620306 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760187.963188 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760187.977738 buyer1@elnux1 purchased FISH from seller0@elnux1 2 remains now
+1551760188.9742022 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760188.9756274 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760188.9805868 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760188.998494 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760189.9839976 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760189.994602 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760189.9969852 buyer2@elnux1 purchased FISH from seller0@elnux1 1 remains now
+1551760190.0006378 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760190.0110915 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760190.0133688 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760190.0215724 buyer1@elnux1 purchased FISH from seller0@elnux1 0 remains now
+1551760191.000745 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760191.0150583 buyer2@elnux1 failed to purchase FISH
+1551760191.0151093 seller0@elnux1 now sells 5 FISH
+1551760191.0200627 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760191.0227127 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760191.0319448 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760191.039687 buyer1@elnux1 purchased FISH from seller0@elnux1 4 remains now
+1551760192.013044 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760192.0378954 buyer1@elnux1 issues a lookup to seller0@elnux1 for SALT
+1551760192.0405383 buyer1@elnux1 issues a lookup to buyer2@elnux1 for SALT
+1551760193.0233932 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760193.026257 buyer2@elnux1 issues a lookup to buyer0@elnux3 for FISH
+1551760193.0481794 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760193.048711 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760193.0526035 buyer1@elnux1 issues a lookup to buyer2@elnux3 for FISH
+1551760193.0578709 buyer1@elnux1 issues a lookup to seller1@elnux3 for FISH
+1551760193.0650883 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760193.0819557 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760193.1176126 buyer1@elnux1 purchased FISH from seller0@elnux1 3 remains now
+1551760193.1281414 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760193.1387782 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760193.3766794 buyer0@elnux3 purchased FISH from seller0@elnux1 2 remains now
+1551760194.0420465 buyer2@elnux1 issues a lookup to buyer1@elnux1 for BOARS
+1551760194.0447555 buyer2@elnux1 issues a lookup to buyer0@elnux3 for BOARS
+1551760194.0642114 buyer2@elnux1 purchased FISH from seller0@elnux1 1 remains now
+1551760194.077141 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760194.083592 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760194.1131988 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760194.1156223 buyer1@elnux1 issues a lookup to buyer2@elnux3 for FISH
+1551760194.1183996 buyer1@elnux1 issues a lookup to seller1@elnux3 for FISH
+1551760194.1223683 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760194.128195 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760194.1426144 buyer1@elnux1 purchased FISH from seller0@elnux1 0 remains now
+1551760194.1835923 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760194.18588 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760194.389144 buyer0@elnux3 failed to purchase FISH
+1551760194.3892093 seller0@elnux1 now sells 5 BOARS
+1551760194.466807 buyer2@elnux3 purchased BOARS from seller0@elnux1 4 remains now
+1551760195.0622642 buyer2@elnux1 issues a lookup to buyer1@elnux1 for BOARS
+1551760195.0648963 buyer2@elnux1 issues a lookup to buyer0@elnux3 for BOARS
+1551760195.0918863 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760195.099439 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760195.1062367 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760195.1390839 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760195.1417313 buyer1@elnux1 issues a lookup to buyer2@elnux3 for BOARS
+1551760195.1455188 buyer1@elnux1 issues a lookup to seller1@elnux3 for BOARS
+1551760195.1492636 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760195.154474 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760195.165386 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760195.1707747 buyer1@elnux1 purchased BOARS from seller0@elnux1 3 remains now
+1551760195.1713655 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760196.0858853 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760196.0884624 buyer2@elnux1 issues a lookup to buyer0@elnux3 for SALT
+1551760196.1687293 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760196.1714275 buyer1@elnux1 issues a lookup to buyer2@elnux3 for BOARS
+1551760196.1746466 buyer1@elnux1 issues a lookup to seller1@elnux3 for BOARS
+1551760196.1794088 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760196.182248 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760196.1932416 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760196.2010965 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760196.4102051 buyer0@elnux3 purchased BOARS from seller0@elnux1 2 remains now
+1551760197.1087341 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760197.1114604 buyer2@elnux1 issues a lookup to buyer0@elnux3 for SALT
+1551760197.19746 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760197.1998758 buyer1@elnux1 issues a lookup to buyer2@elnux3 for FISH
+1551760197.2030299 buyer1@elnux1 issues a lookup to seller1@elnux3 for FISH
+1551760197.2062669 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+1551760197.527107 buyer2@elnux3 purchased BOARS from seller0@elnux1 1 remains now
+1551760198.1276927 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760198.1304495 buyer2@elnux1 issues a lookup to buyer0@elnux3 for SALT
+1551760198.2219074 buyer1@elnux1 issues a lookup to seller0@elnux1 for SALT
+1551760198.224582 buyer1@elnux1 issues a lookup to buyer2@elnux3 for SALT
+1551760198.2278283 buyer1@elnux1 issues a lookup to seller1@elnux3 for SALT
+1551760198.2307963 buyer1@elnux1 issues a lookup to buyer2@elnux1 for SALT
+1551760198.5523589 buyer2@elnux3 purchased BOARS from seller0@elnux1 0 remains now
+1551760199.1443412 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760199.1466112 buyer2@elnux1 issues a lookup to buyer0@elnux3 for FISH
+1551760199.2430434 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760199.245705 buyer1@elnux1 issues a lookup to buyer2@elnux3 for BOARS
+1551760199.2489362 buyer1@elnux1 issues a lookup to seller1@elnux3 for BOARS
+1551760199.2527082 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760199.2582786 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760199.266078 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760199.2712147 buyer1@elnux1 failed to purchase BOARS
+1551760199.271401 seller0@elnux1 now sells 5 BOARS
+1551760199.2726548 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760200.161634 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760200.1642587 buyer2@elnux1 issues a lookup to buyer0@elnux3 for FISH
+1551760200.2688067 buyer1@elnux1 issues a lookup to seller0@elnux1 for SALT
+1551760200.2713318 buyer1@elnux1 issues a lookup to buyer2@elnux3 for SALT
+1551760200.274319 buyer1@elnux1 issues a lookup to seller1@elnux3 for SALT
+1551760200.2781663 buyer1@elnux1 issues a lookup to buyer2@elnux1 for SALT
+1551760201.179516 buyer2@elnux1 issues a lookup to buyer1@elnux1 for SALT
+1551760201.182184 buyer2@elnux1 issues a lookup to buyer0@elnux3 for SALT
+1551760201.2947001 buyer1@elnux1 issues a lookup to seller0@elnux1 for SALT
+1551760201.2971573 buyer1@elnux1 issues a lookup to buyer2@elnux3 for SALT
+1551760201.3014364 buyer1@elnux1 issues a lookup to seller1@elnux3 for SALT
+1551760201.3051255 buyer1@elnux1 issues a lookup to buyer2@elnux1 for SALT
+1551760202.1962676 buyer2@elnux1 issues a lookup to buyer1@elnux1 for BOARS
+1551760202.1986542 buyer2@elnux1 issues a lookup to buyer0@elnux3 for BOARS
+1551760202.222753 buyer2@elnux1 got a match reply from seller0@elnux1
+1551760202.230021 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760202.2366424 buyer2@elnux1 got a match reply from seller1@elnux3
+1551760202.3161495 buyer1@elnux1 issues a lookup to seller0@elnux1 for BOARS
+1551760202.318886 buyer1@elnux1 issues a lookup to buyer2@elnux3 for BOARS
+1551760202.3224864 buyer1@elnux1 issues a lookup to seller1@elnux3 for BOARS
+1551760202.32618 buyer1@elnux1 issues a lookup to buyer2@elnux1 for BOARS
+1551760202.3309605 buyer1@elnux1 got a match reply from seller0@elnux1
+1551760202.3386636 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760202.3434248 buyer1@elnux1 purchased BOARS from seller0@elnux1 4 remains now
+1551760202.3460083 buyer1@elnux1 got a match reply from seller1@elnux3
+1551760203.215083 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760203.217788 buyer2@elnux1 issues a lookup to buyer0@elnux3 for FISH
+1551760203.238175 buyer2@elnux1 purchased BOARS from seller0@elnux1 3 remains now
+1551760203.3417876 buyer1@elnux1 issues a lookup to seller0@elnux1 for SALT
+1551760203.3440492 buyer1@elnux1 issues a lookup to buyer2@elnux3 for SALT
+1551760203.3471081 buyer1@elnux1 issues a lookup to seller1@elnux3 for SALT
+1551760203.3504915 buyer1@elnux1 issues a lookup to buyer2@elnux1 for SALT
+1551760204.2367334 buyer2@elnux1 issues a lookup to buyer1@elnux1 for FISH
+1551760204.239295 buyer2@elnux1 issues a lookup to buyer0@elnux3 for FISH
+1551760204.3657277 buyer1@elnux1 issues a lookup to seller0@elnux1 for FISH
+1551760204.3682668 buyer1@elnux1 issues a lookup to buyer2@elnux3 for FISH
+1551760204.3718455 buyer1@elnux1 issues a lookup to seller1@elnux3 for FISH
+1551760204.3752499 buyer1@elnux1 issues a lookup to buyer2@elnux1 for FISH
+
+
