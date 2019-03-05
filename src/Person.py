@@ -232,7 +232,7 @@ class Person(Thread):
             if id_list and len(id_list) == 1:
                 # Only one peer id left, this is the seller_id by current design
 
-                print(self.id, "got a match reply from", id_list[0])
+                print(time.time(), self.id, "got a match reply from", id_list[0])
 
                 with self.seller_list_lock:
                     self.sellers.extend(id_list)
