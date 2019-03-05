@@ -7,7 +7,11 @@
 	python3 JoinMarket.py hostname
 
 	ex. 
+	To spawn peers on elnux1, you do
 	python3 JoinMarket.py elnux1.cs.umass.edu
+
+	To spawn more peers on elnux3, you run the same command 
+	python3 JoinMarket.py elnux1.cs.umass.edu 
 
 Note the hostname argument above needs to be consistent when you run the script across different machines. It's just where the naming server is. The peers will always be spawned with the same hostname of the machine where the scrip it run. 
 
